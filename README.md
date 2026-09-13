@@ -19,8 +19,11 @@
 - [Why](#why)
 - [How it works](#how-it-works)
 - [Install & enable](#install--enable)
+- [pwsh support](#pwsh-support)
+  - [Assembly matrix](#assembly-matrix)
 - [API / Configuration](#api--configuration)
 - [Which commands are routed](#which-commands-are-routed)
+- [Upgrading from 0.1.x](#upgrading-from-01x)
 - [Development](#development)
 - [License](#license)
 
@@ -37,6 +40,7 @@ The plugin rewrites commands at the `resolve()` boundary — before anything run
 | `git status \| grep x` | `git status \| grep x` | Complex shell — **passthrough** |
 | `ls -la` | `ls -la` | Not whitelisted — **passthrough** |
 | `git status` (rtk absent) | `git status` | Binary missing — **identity fallback** |
+| `git status # note` | bash: `rtk git status # note`, pwsh: unchanged | `#` is a pwsh comment, plain text in bash (see below) |
 
 Everything else — workdir, timeout, env, exit code, sandbox confinement — is inherited unchanged.
 
@@ -67,6 +71,8 @@ Three independent guards decide (see [`src/wrap.ts`](src/wrap.ts)):
 1. **Complexity** — any shell metacharacter (`| & ; < > \` $`) disqualifies the command. Wrapping those would silently alter what runs, so they pass through untouched.
 2. **Whitelist** — only known dev tools that `rtk` actually implements are eligible (map in `wrap.ts`).
 3. **Availability** — if the `rtk` binary is absent on `PATH`, the transform is the **identity**: the deployment behaves exactly like the stock local executor.
+
+Guard 2 reads the **shell dimension**: it applies the metacharacter set of the shell that will parse the command, so `git status # note` passes through under pwsh but is plain argument text under bash. Guards 1 and 3 are dialect-independent — `git` is `git` in either shell.
 
 ### Versioning note
 
@@ -128,7 +134,49 @@ dsh web   # restart to apply
 
 The bundled overlay snippet lives in [`cordis.patch.yml`](cordis.patch.yml): one `shell-rtk` auto assembler, disabled by default. At startup it probes pwsh (resolve the executable, then verify it starts) and mounts the matching rtk executor family — pwsh where pwsh runs, bash otherwise — so **one profile is correct on every platform**. Pin the dialect with `preferShell: 'auto' | 'pwsh' | 'bash'` (default `auto`). The mounted executor wraps the stock sandbox executor, so file confinement is preserved; the unconfined `RtkBashExecutor` / `RtkPwshExecutor` classes stay available for `danger-full-access` setups.
 
-> **Upgrading from 0.1.x:** the `bash-rtk` overlay entry is gone — replace that profile row with `shell-rtk` (the recipe above is otherwise unchanged).
+## pwsh support
+
+The plugin covers both shell dialects through one executor family per dimension: `bash` and `pwsh`, each with a `local` and a `sandbox` variant. The pwsh members are subclasses of the stock pwsh executors with the same `resolve()` boundary rewrite, and the pwsh `ENCODING_PREAMBLE` is an argv-level concern that never reaches that boundary — so wrapping behaves exactly as it does on bash.
+
+The safety policy is one policy, two metacharacter sets:
+
+| Dialect | Disqualifying metacharacters | Why |
+|---|---|---|
+| bash | `\|` `&` `;` `<` `>` `` ` `` `$` | Pipelines, lists, redirections, command substitution, variables |
+| pwsh | the bash set plus `()` `@` `{}` `#` and line breaks | Expression parentheses, splatting/array `@`, scriptblocks, comments, multi-statement source |
+
+The pwsh set is a superset chosen the conservative way: those characters have a parsing meaning in pwsh, so a command containing one is never wrapped — wrapping it would silently change what runs. That set is also the default of the `wrapWithRtk` library function; a caller executing through bash must say so explicitly to get the narrower set.
+
+| `command` | bash | pwsh |
+|---|---|---|
+| `git status` | `rtk git status` | `rtk git status` |
+| `git status \| grep x` | passthrough | passthrough |
+| `git status # note` | `rtk git status # note` | passthrough |
+| `git log (dev)` | `rtk git log (dev)` | passthrough |
+
+### Assembly matrix
+
+`ctx.shell` is a **single service slot** on every host: the bash and pwsh executors are mutually exclusive, and registering both fails the host loudly. The bundled `shell-rtk` entry claims it exactly once. It resolves the pwsh executable, verifies it actually starts (exit code 0), and mounts the matching family; `preferShell` overrides that verdict. The probe runs once per process — restart `dsh` after installing pwsh or rtk.
+
+| platform | pwsh | preferShell | mounted executor |
+|---|---|---|---|
+| Windows | present | `auto` | pwsh family (rtk-wrapped) |
+| Windows | present | `pwsh` | pwsh family (rtk-wrapped) |
+| Windows | present | `bash` | bash family (rtk-wrapped) |
+| Windows | absent | `auto` | bash family (rtk-wrapped) |
+| Windows | absent | `pwsh` | pwsh family (rtk-wrapped) |
+| Linux / macOS | present | `auto` | pwsh family (rtk-wrapped) |
+| Linux / macOS | present | `pwsh` | pwsh family (rtk-wrapped) |
+| Linux / macOS | present | `bash` | bash family (rtk-wrapped) |
+| Linux / macOS | absent | `auto` | bash family (rtk-wrapped) |
+| Linux / macOS | absent | `bash` | bash family (rtk-wrapped) |
+
+Reading the matrix:
+
+- `preferShell: 'pwsh'` wins even when the probe finds nothing — the rtk transform stays in place, and command execution then fails the way a stock pwsh executor would on a host without pwsh. Pin the dialect only where you know it exists.
+- `preferShell: 'auto'` is the only setting where the probe decides, so one profile is correct on every machine.
+- The probe is a real launch, not a path check: `resolvePwshPath()` never fails — it falls back to a bare `pwsh` string for `PATH` resolution — so existence is only observable by starting the candidate.
+- Whichever family is mounted wraps the **sandbox** executor, so file confinement is preserved. The unconfined `RtkBashExecutor` / `RtkPwshExecutor` classes remain available for `danger-full-access` deployments.
 
 ## API / Configuration
 
@@ -153,6 +201,36 @@ All other options — `cwd`, `timeoutMs`, `graceMs`, etc. — are inherited unch
 The set of commands eligible for rtk-wrapping is defined by **rtk itself** — see the [rtk command reference](https://github.com/rtk-ai/rtk#supported-ecosystems) / [`README.md`](https://github.com/rtk-ai/rtk/blob/develop/README.md#test-runners) for the authoritative, maintained list. This plugin mirrors that list; when rtk adds a new subcommand, upgrade rtk (not this plugin) to pick it up.
 
 Complex commands — pipelines, `&&`/`;`, redirects, `$( )`, env assignments — always run natively regardless of the whitelist.
+
+## Upgrading from 0.1.x
+
+0.2.0 replaces the per-dialect overlay entries with the single `shell-rtk` assembler. The main entry (`@deeptrial/dsh-bash-rtk`) still defaults to the bash sandbox executor, so a library consumer importing it keeps the 0.1.x behaviour — but the plugin now wraps through the metacharacter set of the dialect that actually parses the command. A profile written for 0.1.x needs two edits:
+
+```yaml
+# before (0.1.x)
+- insert:
+    - id: bash-rtk
+      name: '@deeptrial/dsh-bash-rtk'
+      disabled: false
+
+# after (0.2.0)
+- insert:
+    - id: bash-sandbox
+      disabled: true
+    - id: pwsh-sandbox
+      disabled: true
+    - id: shell-rtk
+      name: '@deeptrial/dsh-bash-rtk/auto'
+      disabled: false
+      config:
+        preferShell: auto
+```
+
+1. Delete the `bash-rtk` row — the entry id no longer exists, because the assembler that replaces it picks the dialect for you.
+2. Disable the stock executor the plugin overrides and enable `shell-rtk` (see [Install & enable](#install--enable)).
+3. Restart `dsh`. The assembler probes pwsh once at startup; `preferShell: 'bash'` reproduces the 0.1.x dialect exactly, on any platform.
+
+Nothing else changes: `rtkAvailable`, the peer ranges, and the `engines` range are untouched by this release. The `rtk` binary is still yours to install and update.
 
 ## Development
 
