@@ -1,4 +1,4 @@
-import { wrapWithRtk } from "./wrap.js";
+import { ShellDimension, wrapWithRtk } from "./wrap.js";
 import { Config, LocalBashExecutor } from "@deepseek-ai/dsh-bash-local";
 import { Config as Config$1, SandboxBashExecutor } from "@deepseek-ai/dsh-bash-sandbox";
 import { Context } from "cordis";
@@ -33,4 +33,4 @@ declare class RtkSandboxBashExecutor extends SandboxBashExecutor {
   resolve(request: ShellExecRequest): ShellExecSpec;
 }
 //#endregion
-export { RtkBashExecutor, RtkSandboxBashExecutor, RtkSandboxBashExecutor as default, wrapWithRtk };
+export { RtkBashExecutor, RtkSandboxBashExecutor, RtkSandboxBashExecutor as default, type ShellDimension, wrapWithRtk };

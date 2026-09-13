@@ -35,6 +35,12 @@ describe('RtkBashExecutor', () => {
     expect(spec.command).toBe('ls -la')
   })
 
+  it('judges complexity by the bash metacharacter set, not the pwsh default', async () => {
+    const { bash } = await setup()
+    const spec = bash.resolve({ command: 'git status # note' })
+    expect(spec.command).toBe('rtk git status # note')
+  })
+
   it('falls back to identity when rtkAvailable is false', async () => {
     const { bash } = await setup({ rtkAvailable: false })
     const spec = bash.resolve({ command: 'git status' })

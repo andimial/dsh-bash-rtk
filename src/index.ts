@@ -18,7 +18,7 @@ import type { Config as SandboxConfig } from '@deepseek-ai/dsh-bash-sandbox'
 import type { ShellExecRequest, ShellExecSpec } from '@deepseek-ai/dsh-shell'
 import { wrapWithRtk } from './wrap.ts'
 
-export { wrapWithRtk } from './wrap.ts'
+export { wrapWithRtk, type ShellDimension } from './wrap.ts'
 
 /** Extend the upstream config so cordis plugin() accepts rtkAvailable. */
 declare module '@deepseek-ai/dsh-bash-local' {
@@ -53,7 +53,7 @@ export class RtkBashExecutor extends LocalBashExecutor {
 
   override resolve(request: ShellExecRequest): ShellExecSpec {
     const spec = super.resolve(request)
-    return { ...spec, command: wrapWithRtk(spec.command, this.rtkAvailable) }
+    return { ...spec, command: wrapWithRtk(spec.command, this.rtkAvailable, 'bash') }
   }
 }
 
@@ -75,7 +75,7 @@ export class RtkSandboxBashExecutor extends SandboxBashExecutor {
 
   override resolve(request: ShellExecRequest): ShellExecSpec {
     const spec = super.resolve(request)
-    return { ...spec, command: wrapWithRtk(spec.command, this.rtkAvailable) }
+    return { ...spec, command: wrapWithRtk(spec.command, this.rtkAvailable, 'bash') }
   }
 }
 
