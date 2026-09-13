@@ -79,17 +79,19 @@ The plugin **does not bundle or pin rtk**. At `dsh` startup it probes `rtk --ver
 
 ### Compatibility & version alignment
 
-This plugin depends on three `@deepseek-ai/dsh-*` packages that DeepSeek Harness publishes to npm **independently** from the `dsh` aggregate package. Because those sub-packages (and `dsh` itself) ship as **prereleases** (`x.y.z-rc.n`), the peer ranges must carry an explicit prerelease branch per [awesome-dsh-plugin/contributing.md](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/blob/main/contributing.md) — a broad-looking range like `>=0.0.1-rc.1 <0.2.0` would *silently* exclude every `0.1.0-*` / `0.1.1-*` prerelease (node-semver only lets a prerelease satisfy a range if some comparator shares its exact `major.minor.patch` tuple and also carries a prerelease tag).
+This plugin depends on five `@deepseek-ai/dsh-*` packages that DeepSeek Harness publishes to npm **independently** from the `dsh` aggregate package. Because those sub-packages (and `dsh` itself) ship as **prereleases** (`x.y.z-rc.n`), the peer ranges must carry an explicit prerelease branch per [awesome-dsh-plugin/contributing.md](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/blob/main/contributing.md) — a broad-looking range like `>=0.0.1-rc.1 <0.2.0` would *silently* exclude every `0.1.0-*` / `0.1.1-*` prerelease (node-semver only lets a prerelease satisfy a range if some comparator shares its exact `major.minor.patch` tuple and also carries a prerelease tag).
 
 The actual ranges (see `peerDependencies` in `package.json`) are:
 
 ```
 "@deepseek-ai/dsh-bash-local":   ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.1.1 || >=0.1.1-rc.1 <0.2.0-0"
 "@deepseek-ai/dsh-bash-sandbox": ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.1.1 || >=0.1.1-rc.1 <0.2.0-0"
+"@deepseek-ai/dsh-pwsh-local":   ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.1.1 || >=0.1.1-rc.1 <0.2.0-0"
+"@deepseek-ai/dsh-pwsh-sandbox": ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.1.1 || >=0.1.1-rc.1 <0.2.0-0"
 "@deepseek-ai/dsh-shell":        ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.1.1 || >=0.1.1-rc.1 <0.2.0-0"
 ```
 
-`cordis` is **not** a peer dependency: it is injected by `dsh` at runtime, so declaring it would break install for anyone on a registry that lacks a matching published `cordis`. All three `@deepseek-ai/dsh-*` peers are marked `optional` in `peerDependenciesMeta`, so the plugin still loads where they are absent (it then behaves as a passthrough).
+`cordis` is **not** a peer dependency: it is injected by `dsh` at runtime, so declaring it would break install for anyone on a registry that lacks a matching published `cordis`. All five `@deepseek-ai/dsh-*` peers are marked `optional` in `peerDependenciesMeta`, so the plugin still loads where they are absent (it then behaves as a passthrough).
 
 The plugin's `dsh.plugin.json` declares:
 

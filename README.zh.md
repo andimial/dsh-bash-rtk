@@ -79,17 +79,19 @@ model → dsh bash 工具 → RtkBashExecutor.resolve()
 
 ## 兼容性与版本对齐
 
-本插件依赖三个 `@deepseek-ai/dsh-*` 包，DeepSeek Harness 将它们与 `dsh` 聚合包**分开**发布到 npm。由于这些子包（以及 `dsh` 本身）都以**预发布**形式（`x.y.z-rc.n`）发布，peer 范围必须按 [awesome-dsh-plugin/contributing.md](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/blob/main/contributing.md) 带上显式的预发布分支——像 `>=0.0.1-rc.1 <0.2.0` 这样"看起来很宽"的范围会*静默*排除所有 `0.1.0-*` / `0.1.1-*` 预发布（node-semver 只有当某比较符与候选版本同 `major.minor.patch` 元组且自身也带预发布标签时，才放行预发布版本）。
+本插件依赖五个 `@deepseek-ai/dsh-*` 包，DeepSeek Harness 将它们与 `dsh` 聚合包**分开**发布到 npm。由于这些子包（以及 `dsh` 本身）都以**预发布**形式（`x.y.z-rc.n`）发布，peer 范围必须按 [awesome-dsh-plugin/contributing.md](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/blob/main/contributing.md) 带上显式的预发布分支——像 `>=0.0.1-rc.1 <0.2.0` 这样"看起来很宽"的范围会*静默*排除所有 `0.1.0-*` / `0.1.1-*` 预发布（node-semver 只有当某比较符与候选版本同 `major.minor.patch` 元组且自身也带预发布标签时，才放行预发布版本）。
 
 实际范围（见 `package.json` 的 `peerDependencies`）为：
 
 ```
 "@deepseek-ai/dsh-bash-local":   ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.1.1 || >=0.1.1-rc.1 <0.2.0-0"
 "@deepseek-ai/dsh-bash-sandbox": ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.1.1 || >=0.1.1-rc.1 <0.2.0-0"
+"@deepseek-ai/dsh-pwsh-local":   ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.1.1 || >=0.1.1-rc.1 <0.2.0-0"
+"@deepseek-ai/dsh-pwsh-sandbox": ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.1.1 || >=0.1.1-rc.1 <0.2.0-0"
 "@deepseek-ai/dsh-shell":        ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.1.1 || >=0.1.1-rc.1 <0.2.0-0"
 ```
 
-`cordis` **不是** peer 依赖：它由 `dsh` 在运行时注入，声明它会导致任何所在 registry 没有对应 `cordis` 发布的用户安装失败。三个 `@deepseek-ai/dsh-*` peer 都在 `peerDependenciesMeta` 中标记为 `optional`，因此在它们缺失时插件仍可加载（此时退化为透传）。
+`cordis` **不是** peer 依赖：它由 `dsh` 在运行时注入，声明它会导致任何所在 registry 没有对应 `cordis` 发布的用户安装失败。五个 `@deepseek-ai/dsh-*` peer 都在 `peerDependenciesMeta` 中标记为 `optional`，因此在它们缺失时插件仍可加载（此时退化为透传）。
 
 本插件的 `dsh.plugin.json` 声明：
 

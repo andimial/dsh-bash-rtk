@@ -8,7 +8,7 @@ import type { UserConfig } from 'tsdown'
 
 export default [
   {
-    entry: { index: 'src/index.ts', wrap: 'src/wrap.ts' },
+    entry: { index: 'src/index.ts', wrap: 'src/wrap.ts', pwsh: 'src/pwsh.ts' },
     outDir: 'lib',
     format: ['esm'],
     platform: 'node',
@@ -21,6 +21,8 @@ export default [
         'cordis',
         '@deepseek-ai/dsh-bash-local',
         '@deepseek-ai/dsh-bash-sandbox',
+        '@deepseek-ai/dsh-pwsh-local',
+        '@deepseek-ai/dsh-pwsh-sandbox',
         '@deepseek-ai/dsh-shell',
       ],
     },

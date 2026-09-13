@@ -6,10 +6,12 @@
  * A command that is not eligible for wrapping (complex shell, non-whitelisted
  * tool, or a missing `rtk` binary) passes through byte-for-byte.
  *
+ * The pwsh members of the same executor family live in the `./pwsh` subpath
+ * export.
+ *
  * @module @deeptrial/dsh-bash-rtk
  */
 
-import { spawnSync } from 'node:child_process'
 import { Context } from 'cordis'
 import { LocalBashExecutor } from '@deepseek-ai/dsh-bash-local'
 import type { Config as LocalConfig } from '@deepseek-ai/dsh-bash-local'
@@ -17,6 +19,7 @@ import { SandboxBashExecutor } from '@deepseek-ai/dsh-bash-sandbox'
 import type { Config as SandboxConfig } from '@deepseek-ai/dsh-bash-sandbox'
 import type { ShellExecRequest, ShellExecSpec } from '@deepseek-ai/dsh-shell'
 import { wrapWithRtk } from './wrap.ts'
+import { probeRtk } from './rtk.ts'
 
 export { wrapWithRtk, type ShellDimension } from './wrap.ts'
 
@@ -24,17 +27,6 @@ export { wrapWithRtk, type ShellDimension } from './wrap.ts'
 declare module '@deepseek-ai/dsh-bash-local' {
   interface Config {
     rtkAvailable?: boolean
-  }
-}
-
-/** Probe for the `rtk` binary on PATH; absence degrades to the identity transform. */
-function resolveRtk(): boolean {
-  try {
-    const result = spawnSync('rtk', ['--version'], { stdio: 'ignore' })
-    return result.status === 0
-  } catch {
-    /* v8 ignore next -- spawnSync throws only on a broken runtime, not a missing binary */
-    return false
   }
 }
 
@@ -48,7 +40,7 @@ export class RtkBashExecutor extends LocalBashExecutor {
 
   constructor(ctx: Context, config: LocalConfig) {
     super(ctx, config)
-    this.rtkAvailable = config.rtkAvailable ?? resolveRtk()
+    this.rtkAvailable = config.rtkAvailable ?? probeRtk()
   }
 
   override resolve(request: ShellExecRequest): ShellExecSpec {
@@ -70,7 +62,7 @@ export class RtkSandboxBashExecutor extends SandboxBashExecutor {
 
   constructor(ctx: Context, config: SandboxConfig) {
     super(ctx, config)
-    this.rtkAvailable = config.rtkAvailable ?? resolveRtk()
+    this.rtkAvailable = config.rtkAvailable ?? probeRtk()
   }
 
   override resolve(request: ShellExecRequest): ShellExecSpec {
