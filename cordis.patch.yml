@@ -1,24 +1,34 @@
-# dsh-bash-rtk optional overlay: routes eligible bash commands through rtk
+# dsh-bash-rtk optional overlay: routes eligible shell commands through rtk
 # (Rust Token Killer) to compress tool output and save tokens.
 #
-# The inserted executor is DISABLED by default, so installing the plugin has no
-# effect. To enable it, add these two lines to your profile's cordis.patch.yml
-# (the default bash-sandbox must be disabled and the rtk executor enabled):
+# The inserted auto assembler is DISABLED by default, so installing the plugin
+# has no effect. To enable it, add these lines to your profile's
+# cordis.patch.yml (both stock executors must be off and shell-rtk on):
 #
 #   - id: bash-sandbox
 #     disabled: true
-#   - id: bash-rtk
+#   - id: pwsh-sandbox
+#     disabled: true
+#   - id: shell-rtk
 #     disabled: false
 #
-# The rtk executor inherits the sandbox executor's confinement mechanics and
-# only rewrites the shell source, so sandbox policy, denial/enforcement facts,
-# workdir/timeout/env/exit-code, and background-job semantics are unchanged;
-# only eligible commands' output is filtered. Requires the `rtk` binary on
-# PATH; without it, every command passes through unchanged.
+# shell-rtk probes pwsh once at startup and mounts the matching family: pwsh
+# present runs the pwsh executor, absent falls back to bash. Pin the dialect
+# with `preferShell: 'auto' | 'pwsh' | 'bash'` (default: auto).
+#
+# The mounted executor inherits the sandbox executor's confinement mechanics
+# and only rewrites the shell source, so sandbox policy, denial/enforcement
+# facts, workdir/timeout/env/exit-code, and background-job semantics are
+# unchanged; only eligible commands' output is filtered. Requires the `rtk`
+# binary on PATH; without it, every command passes through unchanged.
+#
+# Upgrading from 0.1.x: the `bash-rtk` entry id is gone. Replace that profile
+# row with `shell-rtk` (the recipe above is otherwise unchanged).
 
 - insert:
-    - id: bash-rtk
-      name: '@deeptrial/dsh-bash-rtk'
+    - id: shell-rtk
+      name: '@deeptrial/dsh-bash-rtk/auto'
       disabled: true
       config:
+        preferShell: auto
         timeoutMs: 60000

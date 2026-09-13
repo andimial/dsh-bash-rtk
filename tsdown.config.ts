@@ -8,7 +8,7 @@ import type { UserConfig } from 'tsdown'
 
 export default [
   {
-    entry: { index: 'src/index.ts', wrap: 'src/wrap.ts', pwsh: 'src/pwsh.ts' },
+    entry: { index: 'src/index.ts', wrap: 'src/wrap.ts', pwsh: 'src/pwsh.ts', auto: 'src/auto.ts' },
     outDir: 'lib',
     format: ['esm'],
     platform: 'node',

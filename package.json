@@ -18,6 +18,10 @@
       "types": "./lib/pwsh.d.ts",
       "default": "./lib/pwsh.js"
     },
+    "./auto": {
+      "types": "./lib/auto.d.ts",
+      "default": "./lib/auto.js"
+    },
     "./cordis.patch.yml": "./cordis.patch.yml",
     "./package.json": "./package.json"
   },

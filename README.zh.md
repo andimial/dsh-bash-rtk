@@ -70,7 +70,7 @@ model → dsh bash 工具 → RtkBashExecutor.resolve()
 
 ### 版本说明
 
-本插件**不捆绑、不锁定 rtk 版本**。`dsh` 启动时会探测 `PATH` 上的 `rtk --version`（见 [`src/index.ts`](src/index.ts) 的 `resolveRtk()`）。因此：
+本插件**不捆绑、不锁定 rtk 版本**。`dsh` 启动时会探测 `PATH` 上的 `rtk --version`（见 [`src/rtk.ts`](src/rtk.ts) 的 `probeRtk()`）。因此：
 
 - **rtk 发布新版本时**，任何在本地升级了 `rtk` 的用户会自动获得新行为 —— 无需更新本插件。
 - 本插件版本（本仓库）与 rtk 版本**相互独立**，请勿混为一谈。本说明给出的是测试所基于的*最低* rtk 版本，而非锁步版本号。
@@ -118,13 +118,17 @@ dsh plugin --profile web add \
 # 通过可选 overlay 启用 —— 在你的 profile 的 cordis.patch.yml 中添加：
 #   - id: bash-sandbox
 #     disabled: true
-#   - id: bash-rtk
+#   - id: pwsh-sandbox
+#     disabled: true
+#   - id: shell-rtk
 #     disabled: false
 
 dsh web   # 重启以生效
 ```
 
-内置的 overlay 片段位于 [`cordis.patch.yml`](cordis.patch.yml)。它会用 `RtkSandboxBashExecutor`（保留文件隔离）替换原生的沙箱执行器，并保留非隔离的 `RtkBashExecutor` 供 `danger-full-access` 场景使用。
+内置的 overlay 片段位于 [`cordis.patch.yml`](cordis.patch.yml)：唯一入口是 `shell-rtk` 智能装配器，默认禁用。启动时它探测 pwsh（先解析可执行文件位置，再实际启动验证）并装配对应的 rtk 执行器族 —— 有 pwsh 就挂 pwsh 族，没有就落 bash 族 —— 因此**同一份 profile 在任何平台都正确**。用 `preferShell: 'auto' | 'pwsh' | 'bash'`（默认 `auto`）钉死方言。被挂载的执行器包装原生沙箱执行器，文件隔离保留；非隔离的 `RtkBashExecutor` / `RtkPwshExecutor` 类仍可供 `danger-full-access` 场景使用。
+
+> **从 0.1.x 升级：** `bash-rtk` overlay entry 已移除 —— 请把 profile 中该行替换为 `shell-rtk`（上面配方其余部分不变）。
 
 ## API / 配置
 
@@ -132,7 +136,7 @@ dsh web   # 重启以生效
 
 | 选项 | 类型 | 默认值 | 说明 |
 |---|---|---|---|
-| `rtkAvailable` | `boolean` | `resolveRtk()` 结果 | 强制启用或禁用 rtk 包装。适用于测试或二进制路径非标准的部署环境。 |
+| `rtkAvailable` | `boolean` | `rtk --version` 探测结果 | 强制启用或禁用 rtk 包装。适用于测试或二进制路径非标准的部署环境。 |
 
 其余选项 —— `cwd`、`timeoutMs`、`graceMs` 等 —— 均原样继承自上游执行器。
 

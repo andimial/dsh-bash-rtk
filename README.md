@@ -70,7 +70,7 @@ Three independent guards decide (see [`src/wrap.ts`](src/wrap.ts)):
 
 ### Versioning note
 
-The plugin **does not bundle or pin rtk**. At `dsh` startup it probes `rtk --version` on `PATH` (see `resolveRtk()` in [`src/index.ts`](src/index.ts)). Therefore:
+The plugin **does not bundle or pin rtk**. At `dsh` startup it probes `rtk --version` on `PATH` (see `probeRtk()` in [`src/rtk.ts`](src/rtk.ts)). Therefore:
 
 - When **rtk ships a new release**, any user who upgrades `rtk` on their machine automatically gets the new behavior — no plugin update required.
 - The plugin version (this repo) and the rtk version are **independent**; keep them separate. This README states the *minimum* rtk version tested against, not a lockstep number.
@@ -115,16 +115,20 @@ dsh plugin --profile web add "<path-to-this-dir>"
 dsh plugin --profile web add \
   "https://github.com/DeepTrial/dsh-bash-rtk/releases/latest/download/dsh-bash-rtk-latest.tgz"
 
-# enable it via an optional overlay — add to your profile's cordis.patch.yml:
+# enable it via the optional overlay — add to your profile's cordis.patch.yml:
 #   - id: bash-sandbox
 #     disabled: true
-#   - id: bash-rtk
+#   - id: pwsh-sandbox
+#     disabled: true
+#   - id: shell-rtk
 #     disabled: false
 
 dsh web   # restart to apply
 ```
 
-The bundled overlay snippet lives in [`cordis.patch.yml`](cordis.patch.yml). It swaps the stock sandbox executor for `RtkSandboxBashExecutor` (file confinement preserved) and leaves the unconfined `RtkBashExecutor` available for `danger-full-access` setups.
+The bundled overlay snippet lives in [`cordis.patch.yml`](cordis.patch.yml): one `shell-rtk` auto assembler, disabled by default. At startup it probes pwsh (resolve the executable, then verify it starts) and mounts the matching rtk executor family — pwsh where pwsh runs, bash otherwise — so **one profile is correct on every platform**. Pin the dialect with `preferShell: 'auto' | 'pwsh' | 'bash'` (default `auto`). The mounted executor wraps the stock sandbox executor, so file confinement is preserved; the unconfined `RtkBashExecutor` / `RtkPwshExecutor` classes stay available for `danger-full-access` setups.
+
+> **Upgrading from 0.1.x:** the `bash-rtk` overlay entry is gone — replace that profile row with `shell-rtk` (the recipe above is otherwise unchanged).
 
 ## API / Configuration
 
@@ -132,7 +136,15 @@ Both executors accept the same base config as their stock counterparts (`LocalBa
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `rtkAvailable` | `boolean` | `resolveRtk()` result | Force-enable or force-disable rtk wrapping. Useful for tests or deployments where the binary path is non-standard. |
+| `rtkAvailable` | `boolean` | `rtk --version` probe result | Force-enable or force-disable rtk wrapping. Useful for tests or deployments where the binary path is non-standard. |
+
+The `shell-rtk` assembler entry takes the same executor config plus three fields of its own:
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `preferShell` | `'auto' \| 'pwsh' \| 'bash'` | `'auto'` | Which family to mount. `auto` follows the pwsh probe; the others pin the dialect. |
+| `pwshAvailable` | `boolean` | pwsh probe result | Pin the probe verdict, skipping the probe entirely. |
+| `pwshPath` | `string` | resolved well-known location, else `pwsh` | Explicit pwsh executable: the probed candidate and the executable the pwsh family spawns. |
 
 All other options — `cwd`, `timeoutMs`, `graceMs`, etc. — are inherited unchanged from the upstream executors.
 
