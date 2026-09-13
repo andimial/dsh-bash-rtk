@@ -19,6 +19,6 @@
 - insert:
     - id: bash-rtk
       name: '@deeptrial/dsh-bash-rtk'
-      disabled: false
+      disabled: true
       config:
         timeoutMs: 60000
