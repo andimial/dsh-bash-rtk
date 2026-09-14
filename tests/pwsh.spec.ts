@@ -41,6 +41,12 @@ describe('RtkPwshExecutor', () => {
     expect(spec.command).toBe('git status # note')
   })
 
+  it('routes under a confined-looking policy, which a local executor never applies', async () => {
+    const { pwsh } = await setup()
+    const spec = pwsh.resolve({ command: 'git status', sandboxPolicy: { mode: 'workspace-write', workspaceRoot: process.cwd() } })
+    expect(spec.command).toBe('rtk git status')
+  })
+
   it('falls back to identity when rtkAvailable is false', async () => {
     const { pwsh } = await setup({ rtkAvailable: false })
     const spec = pwsh.resolve({ command: 'git status' })

@@ -15,7 +15,7 @@ _Avoid_: 代理、拦截、注入
 _Avoid_: 回退、fallback
 
 **三道关卡（Three Gates）**:
-决定一条命令被 rtk 包装还是透传的三个独立判据，按序：可用性、复杂度、白名单。任一关不过即透传。
+决定一条命令被 rtk 包装还是透传的三个独立判据，按序：可用性、复杂度、白名单。任一关不过即透传。可用性含两层：进程级（rtk 探针）与单次运行级（受限运行透传，见 docs/adr/0003）。
 
 **白名单（Whitelist）**:
 可执行名到 rtk 子命令的固定映射。与 shell 方言无关——git 在 bash 和 pwsh 里都是 git。
@@ -47,6 +47,10 @@ pwsh 执行器在 argv 层拼接的 UTF-8 输出前置语句。不在 resolve() 
 **智能装配器（Auto Assembler）**:
 overlay 的唯一入口（shell-rtk entry）：启动时探 pwsh，存在则装配 pwsh 族，不存在则装配 bash 族。始终只占一个服务位。
 _Avoid_: 路由器、调度器
+
+**受限运行（Confined Run）**:
+Windows 上以受限令牌（WRITE_RESTRICTED）执行的沙箱运行：`read-only` 或 `workspace-write`。rtk 的过滤类子命令在其中无法用管道 stdio 生成孙子进程（EPERM），故一律透传；`danger-full-access` 运行不是受限运行。
+_Avoid_: 沙箱模式、隔离运行
 
 **探针（Probe）**:
 启动时执行一次的外部能力存在性检测。两种：rtk 探针（`rtk --version` 退出码 0）、pwsh 探针（解析出的 pwsh 可执行文件能启动）。结果缓存至进程生命周期。

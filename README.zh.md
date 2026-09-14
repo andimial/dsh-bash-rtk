@@ -18,6 +18,7 @@
 - [环境要求](#环境要求)
 - [为什么需要它](#为什么需要它)
 - [工作原理](#工作原理)
+  - [Windows 受限运行](#windows-受限运行)
 - [安装与启用](#安装与启用)
 - [pwsh 支持](#pwsh-支持)
   - [装配矩阵](#装配矩阵)
@@ -70,9 +71,18 @@ model → dsh bash 工具 → RtkBashExecutor.resolve()
 
 1. **复杂度** — 任何 shell 元字符（`| & ; < > \` $`）都会取消资格。包装这些会改变实际运行内容，故直接透传。
 2. **白名单** — 仅 `rtk` 实际实现的已知开发工具才符合资格（`wrap.ts` 中的映射表）。
-3. **可用性** — 若 `PATH` 上找不到 `rtk` 二进制，变换退化为**恒等**：部署行为与原始本地执行器完全一致。
+3. **可用性** — 只要这次运行容不下 rtk 代理，变换就退化为**恒等**：`PATH` 上找不到 `rtk` 二进制（此时部署行为与原始本地执行器完全一致），或该运行被 Windows 受限令牌沙箱限制（见 [Windows 受限运行](#windows-受限运行)）。
 
 第 2 关按 **shell 维度**取元字符集：用实际解析该命令的 shell 的那一套，因此 `git status # note` 在 pwsh 下透传、在 bash 下只是普通参数文本。第 1、3 关与方言无关 —— `git` 在哪个 shell 里都是 `git`。
+
+### Windows 受限运行
+
+“可用性”还有后半段：被 **Windows 受限令牌沙箱**（`read-only` / `workspace-write`）限制的这次运行一律不路由 rtk —— 因为那里根本容不下一个 rtk 代理。该后端用 `WRITE_RESTRICTED` 令牌约束子进程，而它自己文档化的限制是：*受限*进程无法以管道 stdio 再生成孙子进程（libuv 的管道 stdio 走命名管道，其客户端请求的写权限没有任何 restricting SID 被授予，于是 `spawn(..., { stdio: 'pipe' })` 以 `EPERM` 失败）。rtk 过滤每个工具时都用管道捕获输出，因此 `rtk git status` 会以*拒绝访问*失败，而同样的 `git status` 正常成功 —— 实测于 `dsh-sandbox-windows-acl` + rtk 0.43.0。在那里路由会改变命令结果，而本插件绝不改变语义：这类运行逐字节透传。
+
+在 Windows 上这意味着：
+
+- `danger-full-access` 运行**会**走 rtk —— 包括 harness 按次审批的一次性升级。已在运行中的 `dsh web` host 实测：带上该策略后 `git status` 解析为 `rtk git status`，返回 rtk 的压缩输出，并出现在 `rtk gain --history` 中。
+- POSIX 主机不受影响：其沙箱后端对受限的孙子进程没有这一限制，任何模式都能路由。
 
 ### 版本说明
 

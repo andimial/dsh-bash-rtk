@@ -6,3 +6,6 @@ node_modules/
 .idea/
 coverage/
 dist/
+# local tooling artifacts (codegraph index; pnpm-generated workspace config)
+.codegraph/
+pnpm-workspace.yaml

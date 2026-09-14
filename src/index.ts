@@ -19,7 +19,7 @@ import { SandboxBashExecutor } from '@deepseek-ai/dsh-bash-sandbox'
 import type { Config as SandboxConfig } from '@deepseek-ai/dsh-bash-sandbox'
 import type { ShellExecRequest, ShellExecSpec } from '@deepseek-ai/dsh-shell'
 import { wrapWithRtk } from './wrap.ts'
-import { probeRtk } from './rtk.ts'
+import { confinedWindowsRun, probeRtk } from './rtk.ts'
 
 export { wrapWithRtk, type ShellDimension } from './wrap.ts'
 
@@ -52,8 +52,10 @@ export class RtkBashExecutor extends LocalBashExecutor {
 /**
  * rtk-wrapping SANDBOX bash executor (preserves file confinement). Registers
  * as `ctx.shell` in place of `dsh-bash-sandbox`; the wrap happens before
- * `run`/`start` read `spec.command`, so both the `danger-full-access` and the
- * confined paths run the already-wrapped source.
+ * `run`/`start` read `spec.command`, so the source every routing path runs is
+ * already wrapped. Confined Windows runs are the one exception: they pass
+ * through, because the restricted token cannot host an rtk proxy at all
+ * ({@link confinedWindowsRun}).
  */
 export class RtkSandboxBashExecutor extends SandboxBashExecutor {
   static override inject = ['subprocess', 'sandbox', 'sandboxPolicy']
@@ -67,6 +69,7 @@ export class RtkSandboxBashExecutor extends SandboxBashExecutor {
 
   override resolve(request: ShellExecRequest): ShellExecSpec {
     const spec = super.resolve(request)
+    if (confinedWindowsRun(spec.sandboxPolicy?.mode)) return spec
     return { ...spec, command: wrapWithRtk(spec.command, this.rtkAvailable, 'bash') }
   }
 }

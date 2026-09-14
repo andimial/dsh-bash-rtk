@@ -26,6 +26,9 @@ beforeEach(() => {
   spawnSyncMock.mockReset()
 })
 
+/** One unconfined per-run policy, so routing cases stay host-independent. */
+const FULL_ACCESS = { mode: 'danger-full-access', workspaceRoot: process.cwd() } as const
+
 async function setup(config: AutoConfig = {}) {
   const { ctx } = await sandboxHarness()
   await ctx.plugin(apply, { rtkAvailable: true, ...config })
@@ -98,12 +101,13 @@ describe('auto assembler', () => {
   it('wraps through the bash metacharacter set when bash is mounted', async () => {
     spawnSyncMock.mockReturnValue(exitStatus(1))
     const { ctx } = await setup()
-    expect(ctx.shell.resolve({ command: 'git status # note' }).command).toBe('rtk git status # note')
+    // An unconfined run: confined Windows runs pass through on either dialect.
+    expect(ctx.shell.resolve({ command: 'git status # note', sandboxPolicy: FULL_ACCESS }).command).toBe('rtk git status # note')
   })
 
   it('wraps through the pwsh metacharacter set when pwsh is mounted', async () => {
     spawnSyncMock.mockReturnValue(exitStatus(0))
     const { ctx } = await setup()
-    expect(ctx.shell.resolve({ command: 'git status # note' }).command).toBe('git status # note')
+    expect(ctx.shell.resolve({ command: 'git status # note', sandboxPolicy: FULL_ACCESS }).command).toBe('git status # note')
   })
 })

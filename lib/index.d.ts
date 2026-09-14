@@ -23,8 +23,10 @@ declare class RtkBashExecutor extends LocalBashExecutor {
 /**
  * rtk-wrapping SANDBOX bash executor (preserves file confinement). Registers
  * as `ctx.shell` in place of `dsh-bash-sandbox`; the wrap happens before
- * `run`/`start` read `spec.command`, so both the `danger-full-access` and the
- * confined paths run the already-wrapped source.
+ * `run`/`start` read `spec.command`, so the source every routing path runs is
+ * already wrapped. Confined Windows runs are the one exception: they pass
+ * through, because the restricted token cannot host an rtk proxy at all
+ * ({@link confinedWindowsRun}).
  */
 declare class RtkSandboxBashExecutor extends SandboxBashExecutor {
   static inject: string[];
