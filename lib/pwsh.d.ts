@@ -23,9 +23,9 @@ declare class RtkPwshExecutor extends PwshLocalExecutor {
  * rtk-wrapping SANDBOX pwsh executor (preserves file confinement). Registers
  * as `ctx.shell` in place of `dsh-pwsh-sandbox`; the wrap happens before
  * `run`/`start` build the pwsh argv, so the source every routing path runs is
- * already wrapped. Confined Windows runs are the one exception: they pass
- * through, because the restricted token cannot host an rtk proxy at all
- * ({@link confinedWindowsRun}).
+ * already wrapped. Every run is wrapped, confined Windows runs included: the
+ * restricted token cannot host rtk's piped child, and that is documented as a
+ * warning instead of guarded here (see docs/adr/0004).
  */
 declare class RtkSandboxPwshExecutor extends SandboxPwshExecutor {
   static inject: string[];

@@ -1,5 +1,7 @@
 # 受限的 Windows 运行一律透传（rtk 在受限令牌下无法代理）
 
+> **状态：Superseded（由 [ADR 0004](0004-confined-win32-routing-restored.md) 取代）。** 本文记录的透传闸门已在 0.2.1 撤回；根因分析与实测证据仍然有效，作为 0004 决策的代价依据保留。
+
 真机验收（issue #6）在运行中的 `dsh web` host 上实测：`workspace-write` 下 `ctx.shell` 把 `git status` 改写为 `rtk git status` 后，rtk 以 `Failed to run git status: Failed to execute command: 拒绝访问。 (os error 5)` 失败（exit 1、无输出）；同一条命令**不经 rtk** 时正常成功。手写 `rtk git status`（不经过插件的改写）失败方式完全相同，证明故障属于 rtk 与环境，而非改写本身。
 
 根因见 `@deepseek-ai/dsh-sandbox-windows-acl` 的文档化限制：该后端以 `WRITE_RESTRICTED` 令牌约束子进程，而*受限*进程无法以管道 stdio 生成孙子进程（libuv 的管道 stdio 走命名管道，客户端请求的写权限没有任何 restricting SID 被授予 → `EPERM`）。rtk 过滤任何工具都用管道捕获输出，因此受限运行里**所有过滤类**子命令都不可用；`danger-full-access` 运行（无受限令牌，含一次性升级）与 POSIX 主机不受此限。

@@ -1,9 +1,10 @@
 /**
  * The availability gate of `wrapWithRtk`, shared by both members of the
- * executor family. It has two halves: the process — a deployment without the
- * binary behaves exactly like the stock executor it replaces — and the single
- * run, which a confined Windows host cannot host an rtk proxy in at all (see
- * {@link confinedWindowsRun}).
+ * executor family: the process. A deployment without the binary behaves
+ * exactly like the stock executor it replaces. Availability is deliberately
+ * not a per-run decision — confined Windows runs are routed like any other,
+ * and the restricted-token failure that follows is documented rather than
+ * guarded (see docs/adr/0004).
  *
  * Internal module — not a public subpath.
  *
@@ -11,7 +12,6 @@
  */
 
 import { spawnSync } from 'node:child_process'
-import type { SandboxMode } from '@deepseek-ai/dsh-sandbox'
 
 /**
  * Probe for the `rtk` binary on PATH; absence degrades to the identity
@@ -26,27 +26,4 @@ export function probeRtk(): boolean {
     /* v8 ignore next -- spawnSync throws only on a broken runtime, not a missing binary */
     return false
   }
-}
-
-/**
- * Whether this run is confined by the Windows restricted-token sandbox.
- *
- * That backend confines a child with a `WRITE_RESTRICTED` token, and its
- * documented limit is that a *confined* process cannot spawn a grandchild with
- * piped stdio: libuv's pipe stdio uses named pipes whose client end requests
- * write access no restricting SID holds, so `spawn(..., { stdio: 'pipe' })`
- * fails with EPERM. rtk captures every tool it filters through pipes, so
- * `rtk git status` fails with access denied exactly where `git status`
- * succeeds. Routing such a run would change the command's outcome, and this
- * plugin never does that: confined Windows runs pass through unchanged.
- * `danger-full-access` runs (no restricted token — one-shot escalations
- * included) and every POSIX host keep routing.
- *
- * @param mode - the resolved sandbox mode of this run; `undefined` means the
- * run carries no sandbox policy, so nothing confines it.
- * @param platform - the host platform; a parameter so the decision stays pure.
- * @returns true when the run must not be routed through rtk.
- */
-export function confinedWindowsRun(mode: SandboxMode | undefined, platform: NodeJS.Platform = process.platform): boolean {
-  return platform === 'win32' && mode !== undefined && mode !== 'danger-full-access'
 }

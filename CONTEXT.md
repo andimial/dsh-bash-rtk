@@ -15,7 +15,7 @@ _Avoid_: 代理、拦截、注入
 _Avoid_: 回退、fallback
 
 **三道关卡（Three Gates）**:
-决定一条命令被 rtk 包装还是透传的三个独立判据，按序：可用性、复杂度、白名单。任一关不过即透传。可用性含两层：进程级（rtk 探针）与单次运行级（受限运行透传，见 docs/adr/0003）。
+决定一条命令被 rtk 包装还是透传的三个独立判据，按序：可用性、复杂度、白名单。任一关不过即透传。可用性只有进程级一层（rtk 探针，见 `probeRtk()`）；没有单次运行级的闸门——受限运行照旧改写（见 docs/adr/0004）。
 
 **白名单（Whitelist）**:
 可执行名到 rtk 子命令的固定映射。与 shell 方言无关——git 在 bash 和 pwsh 里都是 git。
@@ -49,7 +49,7 @@ overlay 的唯一入口（shell-rtk entry）：启动时探 pwsh，存在则装�
 _Avoid_: 路由器、调度器
 
 **受限运行（Confined Run）**:
-Windows 上以受限令牌（WRITE_RESTRICTED）执行的沙箱运行：`read-only` 或 `workspace-write`。rtk 的过滤类子命令在其中无法用管道 stdio 生成孙子进程（EPERM），故一律透传；`danger-full-access` 运行不是受限运行。
+Windows 上以受限令牌（WRITE_RESTRICTED）执行的沙箱运行：`read-only` 或 `workspace-write`。插件对它照旧改写；但 rtk 的过滤类子命令在其中无法用管道 stdio 生成孙子进程（EPERM），会以访问拒绝失败——这是文档化警示，不是透传理由（见 docs/adr/0004）。`danger-full-access` 运行不是受限运行。
 _Avoid_: 沙箱模式、隔离运行
 
 **探针（Probe）**:

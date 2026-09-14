@@ -16,7 +16,7 @@ const plugin = JSON.parse(readFileSync(new URL('../dsh.plugin.json', import.meta
 }
 
 /** The release this work ships. */
-const RELEASE = '0.2.0'
+const RELEASE = '0.2.1'
 
 /** The engines range the release deliberately leaves untouched. */
 const ENGINES = { dsh: '>=0.1.0-rc.6 <0.2.0 || >=0.1.1-rc.1 <0.2.0-0' }

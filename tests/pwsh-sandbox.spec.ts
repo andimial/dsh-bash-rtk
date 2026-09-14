@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import { ENCODING_PREAMBLE } from '@deepseek-ai/dsh-pwsh-local'
 import type { SandboxMode } from '@deepseek-ai/dsh-sandbox'
 import { RtkSandboxPwshExecutor } from '../src/pwsh.ts'
-import { confinedWindowsRun } from '../src/rtk.ts'
 import { sandboxHarness } from './support/sandbox-harness.ts'
 
 /**
@@ -14,9 +13,6 @@ import { sandboxHarness } from './support/sandbox-harness.ts'
 const PWSH_PATH = process.execPath
 
 const PWSH_ARGV = [PWSH_PATH, '-NoLogo', '-NoProfile', '-NonInteractive', '-Command'] as const
-
-/** One unconfined per-run policy, so routing cases stay host-independent. */
-const FULL_ACCESS = { mode: 'danger-full-access', workspaceRoot: process.cwd() } as const
 
 async function setup(config: { mode?: SandboxMode } = {}) {
   const { ctx, calls } = await sandboxHarness(config)
@@ -31,15 +27,11 @@ describe('RtkSandboxPwshExecutor', () => {
     expect(pwsh).toBeInstanceOf(RtkSandboxPwshExecutor)
   })
 
-  it('routes eligible commands before the sandbox confines them, wherever the host allows routing', async () => {
+  it('routes eligible commands before the sandbox confines them', async () => {
     const { pwsh, calls } = await setup({ mode: 'read-only' })
-    // Confined Windows runs pass through instead: rtk cannot spawn its piped
-    // child under the restricted token, so wrapping there would break the
-    // command (see rtk.spec.ts for the decision and its truth table).
-    const wrapped = confinedWindowsRun('read-only') ? 'git status' : 'rtk git status'
     await pwsh.run(pwsh.resolve({ command: 'git status' }))
     expect(calls).toHaveLength(1)
-    expect(calls[0]?.argv).toEqual([...PWSH_ARGV, `${ENCODING_PREAMBLE}${wrapped}`])
+    expect(calls[0]?.argv).toEqual([...PWSH_ARGV, `${ENCODING_PREAMBLE}rtk git status`])
   })
 
   it('keeps routing full-access runs on every host', async () => {
@@ -49,7 +41,7 @@ describe('RtkSandboxPwshExecutor', () => {
 
   it('wraps in resolve(), not in argv()', async () => {
     const { pwsh } = await setup()
-    const spec = pwsh.resolve({ command: 'git status', sandboxPolicy: FULL_ACCESS })
+    const spec = pwsh.resolve({ command: 'git status' })
     expect(spec.command).toBe('rtk git status')
     expect(spec.command).not.toContain(ENCODING_PREAMBLE)
   })

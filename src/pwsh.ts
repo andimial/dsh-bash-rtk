@@ -21,7 +21,7 @@ import { SandboxPwshExecutor } from '@deepseek-ai/dsh-pwsh-sandbox'
 import type { Config as SandboxConfig } from '@deepseek-ai/dsh-pwsh-sandbox'
 import type { ShellExecRequest, ShellExecSpec } from '@deepseek-ai/dsh-shell'
 import { wrapWithRtk } from './wrap.ts'
-import { confinedWindowsRun, probeRtk } from './rtk.ts'
+import { probeRtk } from './rtk.ts'
 
 /** Extend the upstream pwsh config so cordis plugin() accepts rtkAvailable. */
 declare module '@deepseek-ai/dsh-pwsh-local' {
@@ -53,9 +53,9 @@ export class RtkPwshExecutor extends PwshLocalExecutor {
  * rtk-wrapping SANDBOX pwsh executor (preserves file confinement). Registers
  * as `ctx.shell` in place of `dsh-pwsh-sandbox`; the wrap happens before
  * `run`/`start` build the pwsh argv, so the source every routing path runs is
- * already wrapped. Confined Windows runs are the one exception: they pass
- * through, because the restricted token cannot host an rtk proxy at all
- * ({@link confinedWindowsRun}).
+ * already wrapped. Every run is wrapped, confined Windows runs included: the
+ * restricted token cannot host rtk's piped child, and that is documented as a
+ * warning instead of guarded here (see docs/adr/0004).
  */
 export class RtkSandboxPwshExecutor extends SandboxPwshExecutor {
   static override inject = ['subprocess', 'sandbox', 'sandboxPolicy']
@@ -69,7 +69,6 @@ export class RtkSandboxPwshExecutor extends SandboxPwshExecutor {
 
   override resolve(request: ShellExecRequest): ShellExecSpec {
     const spec = super.resolve(request)
-    if (confinedWindowsRun(spec.sandboxPolicy?.mode)) return spec
     return { ...spec, command: wrapWithRtk(spec.command, this.rtkAvailable, 'pwsh') }
   }
 }

@@ -71,17 +71,26 @@ Three independent guards decide (see [`src/wrap.ts`](src/wrap.ts)):
 
 1. **Complexity** — any shell metacharacter (`| & ; < > \` $`) disqualifies the command. Wrapping those would silently alter what runs, so they pass through untouched.
 2. **Whitelist** — only known dev tools that `rtk` actually implements are eligible (map in `wrap.ts`).
-3. **Availability** — the transform is the **identity** whenever this run cannot host an rtk proxy: the `rtk` binary is absent on `PATH` (the deployment then behaves exactly like the stock local executor), or the run is confined by the Windows restricted-token sandbox (see [Confined Windows runs](#confined-windows-runs)).
+3. **Availability** — the transform is the **identity** whenever the `rtk` binary is absent on `PATH`; the deployment then behaves exactly like the stock local executor. This gate is a property of the *process*, not of a run: every run is routed, confined Windows runs included — see [Confined Windows runs](#confined-windows-runs) for the one environment where routing fails.
 
 Guard 2 reads the **shell dimension**: it applies the metacharacter set of the shell that will parse the command, so `git status # note` passes through under pwsh but is plain argument text under bash. Guards 1 and 3 are dialect-independent — `git` is `git` in either shell.
 
 ### Confined Windows runs
 
-The availability guard has a per-run half. A run confined by the **Windows restricted-token sandbox** (`read-only` / `workspace-write`) is never routed through rtk, because it cannot host an rtk proxy at all: that backend confines the child with a `WRITE_RESTRICTED` token, and its documented limit is that a *confined* process cannot spawn a grandchild with piped stdio (libuv's pipe stdio uses named pipes whose client end requests write access no restricting SID holds, so `spawn(..., { stdio: 'pipe' })` fails with `EPERM`). rtk captures every tool it filters through pipes, so `rtk git status` fails with *access denied* exactly where `git status` succeeds — measured against `dsh-sandbox-windows-acl` with rtk 0.43.0. Routing such a run would change the command's outcome, and this plugin never changes semantics: it passes through byte-for-byte.
+Windows keeps routing: a run confined by the **Windows restricted-token sandbox** (`read-only` / `workspace-write`) is still rewritten to `rtk <subcommand>`. What changes there is whether rtk can *work* — it cannot. That backend confines the child with a `WRITE_RESTRICTED` token, and its documented limit is that a *confined* process cannot spawn a grandchild with piped stdio (libuv's pipe stdio uses named pipes whose client end requests write access no restricting SID holds, so `spawn(..., { stdio: 'pipe' })` fails with `EPERM`). rtk captures every tool it filters through pipes, so its filtering subcommands fail with *access denied* exactly where the bare command succeeds:
+
+```
+rtk: Failed to run git status: Failed to execute command: 拒绝访问。 (os error 5)
+```
+
+Measured in a live `dsh web` host against `dsh-sandbox-windows-acl` with rtk 0.43.0: `git status`, `git log`, `git diff`, `rg`, `pnpm list` and `gh repo view` all fail that way, while commands rtk merely forwards (`git remote -v`, `git rev-parse HEAD`, `git --version`) still succeed.
+
+This is a **documented warning, not a guard**. 0.2.1 deliberately dropped the confined-run passthrough 0.2.0 shipped, so that one profile behaves the same way in every Windows mode instead of changing semantics by sandbox mode (see [`docs/adr/0004`](docs/adr/0004-confined-win32-routing-restored.md)).
 
 On Windows that means:
 
-- `danger-full-access` runs **do** route through rtk — including one-shot escalations, which the harness approves per call. Verified in a live `dsh web` host: under such a policy `git status` resolved to `rtk git status`, returned rtk's compact output, and showed up in `rtk gain --history`.
+- `danger-full-access` runs — including one-shot escalations, which the harness approves per call — are how you get the token savings. Verified in a live `dsh web` host: under such a policy `git status` resolved to `rtk git status`, returned rtk's compact output, and showed up in `rtk gain --history`.
+- In the default `workspace-write` profile, expect the failure above on filtering subcommands instead of compression. The plugin does not suppress it: a loud error beats a silent, platform-dependent rewrite.
 - POSIX hosts are unaffected: their sandbox backends impose no such limit on a confined grandchild, so routing works in every mode.
 
 ### Versioning note

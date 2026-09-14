@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import { resolve } from 'node:path'
 import type { SandboxMode } from '@deepseek-ai/dsh-sandbox'
 import { RtkSandboxBashExecutor } from '../src/index.ts'
-import { confinedWindowsRun } from '../src/rtk.ts'
 import { sandboxHarness } from './support/sandbox-harness.ts'
 
 async function setup(config: { mode?: SandboxMode } = {}) {
@@ -18,15 +17,11 @@ describe('RtkSandboxBashExecutor', () => {
     expect(bash).toBeInstanceOf(RtkSandboxBashExecutor)
   })
 
-  it('routes eligible commands before the sandbox confines them, wherever the host allows routing', async () => {
+  it('routes eligible commands before the sandbox confines them', async () => {
     const { bash, calls } = await setup({ mode: 'read-only' })
-    // Confined Windows runs pass through instead: rtk cannot spawn its piped
-    // child under the restricted token, so wrapping there would break the
-    // command (see rtk.spec.ts for the decision and its truth table).
-    const expected = confinedWindowsRun('read-only') ? 'git status' : 'rtk git status'
     await bash.run(bash.resolve({ command: 'git status' }))
     expect(calls).toEqual([{
-      argv: ['bash', '-c', expected],
+      argv: ['bash', '-c', 'rtk git status'],
       policy: { mode: 'read-only', workspaceRoot: resolve(process.cwd()) },
     }])
   })

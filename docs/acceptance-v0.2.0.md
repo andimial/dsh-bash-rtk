@@ -66,3 +66,10 @@ git status          -> exit=0  （pass-through，输出为完整 git status）
 1. `pnpm run check`（typecheck + 108 用例 + 构建）。
 2. profile 的 `cordis.patch.yml` 追加：`bash-sandbox disabled: true`、`pwsh-sandbox disabled: true`、`shell-rtk disabled: false`，保存即触发 `include.refresh`（不重启）。
 3. 运行中的 host 内跑 `git status`（默认模式）应透传成功；加一次 `danger-full-access` 升级后应得到 `rtk git status` 的压缩输出，并出现在 `rtk gain --history`。
+   （第 3 步是 v0.2.0 的行为记录：0.2.1 起默认模式不再透传，见下节。）
+
+## 决策反转（v0.2.1）
+
+上一节的处理（受限即透传）在 ticket #6 收尾时被用户裁定撤销：0.2.1 起受限运行照旧改写，上述失败降级为文档化警示（见 [`docs/adr/0004-confined-win32-routing-restored.md`](adr/0004-confined-win32-routing-restored.md)）。
+
+本文其余部分（v0.2.0 的验收结论与原始摘录）保持原样 —— 它们仍是这次反转所依据的实测证据：受限运行下 `resolve()` 产出 `rtk git status`、执行以 `拒绝访问 (os error 5)` 失败，而 `danger-full-access` 下同一命令成功并留下 `-52% (134)` 记录。

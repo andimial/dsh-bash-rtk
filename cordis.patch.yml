@@ -22,10 +22,11 @@
 # unchanged; only eligible commands' output is filtered. Requires the `rtk`
 # binary on PATH; without it, every command passes through unchanged.
 #
-# Confined runs on Windows (read-only / workspace-write) also pass through: the
-# restricted token cannot host rtk's piped child spawn, so routing there would
-# break the command. Use a danger-full-access run (a one-shot escalation counts)
-# when you want rtk on Windows. See docs/adr/0003.
+# Warning: on Windows, confined runs (read-only / workspace-write) are routed
+# like any other, but rtk's filtering subcommands fail there with access denied
+# (os error 5): the restricted token cannot host rtk's piped child spawn. Use a
+# danger-full-access run (a one-shot escalation counts) when you want rtk on
+# Windows. See docs/adr/0004.
 #
 # Upgrading from 0.1.x: the `bash-rtk` entry id is gone. Replace that profile
 # row with `shell-rtk` (the recipe above is otherwise unchanged).
