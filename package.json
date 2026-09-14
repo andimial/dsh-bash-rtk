@@ -82,13 +82,13 @@
     "cordis",
     "plugin"
   ],
-  "homepage": "https://github.com/DeepTrial/dsh-bash-rtk#readme",
+  "homepage": "https://github.com/andimial/dsh-bash-rtk#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/DeepTrial/dsh-bash-rtk.git"
+    "url": "git+https://github.com/andimial/dsh-bash-rtk.git"
   },
   "bugs": {
-    "url": "https://github.com/DeepTrial/dsh-bash-rtk/issues"
+    "url": "https://github.com/andimial/dsh-bash-rtk/issues"
   },
   "author": "DeepTrial",
   "license": "MIT",

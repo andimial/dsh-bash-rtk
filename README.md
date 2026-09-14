@@ -1,12 +1,14 @@
 # dsh-bash-rtk
 
-[![CI](https://github.com/DeepTrial/dsh-bash-rtk/actions/workflows/ci.yml/badge.svg)](https://github.com/DeepTrial/dsh-bash-rtk/actions/workflows/ci.yml)
-[![GitHub Release](https://img.shields.io/github/v/release/DeepTrial/dsh-bash-rtk)](https://github.com/DeepTrial/dsh-bash-rtk/releases)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/DeepTrial/dsh-bash-rtk/blob/main/LICENSE)
+[![CI](https://github.com/andimial/dsh-bash-rtk/actions/workflows/ci.yml/badge.svg)](https://github.com/andimial/dsh-bash-rtk/actions/workflows/ci.yml)
+[![GitHub Release](https://img.shields.io/github/v/release/andimial/dsh-bash-rtk)](https://github.com/andimial/dsh-bash-rtk/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/andimial/dsh-bash-rtk/blob/main/LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D20.0.0-339933?logo=nodedotjs)](https://nodejs.org/)
 
 > Route eligible shell commands through [rtk](https://github.com/rtk-ai/rtk) (Rust Token Killer) inside the DeepSeek Harness (`dsh`) bash executor — compress tool output, save tokens, change nothing else.
+
+> **This repository is a fork of [DeepTrial/dsh-bash-rtk](https://github.com/DeepTrial/dsh-bash-rtk).** Releases and issues live here (fork **andimial/dsh-bash-rtk**).
 
 [中文版](README.zh.md)
 
@@ -126,7 +128,7 @@ The plugin's `dsh.plugin.json` declares:
 
 i.e. it is verified against `dsh` `0.1.1-rc.2`, accepts any `0.1.x` prerelease/build, and deliberately **excludes** `0.2.0+` (a future major that may change the `LocalBashExecutor.resolve()` / `ShellExecSpec` API — a sub-package bump will be required before this plugin can track it).
 
-> **Known version skew:** `dsh` (the aggregate, what `npx @deepseek-ai/dsh` installs) and its `@deepseek-ai/dsh-*` sub-packages are on **separate semver tracks** — the aggregate can be `0.1.1-rc.2` while the published sub-packages are still `0.0.1-rc.1`. The ranges above pin to the *published* sub-package versions so a plain `dsh plugin add` resolves cleanly. Watch the [releases](https://github.com/DeepTrial/dsh-bash-rtk/releases) for a matching update.
+> **Known version skew:** `dsh` (the aggregate, what `npx @deepseek-ai/dsh` installs) and its `@deepseek-ai/dsh-*` sub-packages are on **separate semver tracks** — the aggregate can be `0.1.1-rc.2` while the published sub-packages are still `0.0.1-rc.1`. The ranges above pin to the *published* sub-package versions so a plain `dsh plugin add` resolves cleanly. Watch the [releases](https://github.com/andimial/dsh-bash-rtk/releases) for a matching update.
 
 ## Install & enable
 
@@ -138,7 +140,7 @@ dsh plugin --profile web add "<path-to-this-dir>"
 
 # 2) or directly from the latest GitHub release tarball (no local clone needed)
 dsh plugin --profile web add \
-  "https://github.com/DeepTrial/dsh-bash-rtk/releases/latest/download/dsh-bash-rtk-latest.tgz"
+  "https://github.com/andimial/dsh-bash-rtk/releases/latest/download/dsh-bash-rtk-latest.tgz"
 
 # enable it via the optional overlay — add to your profile's cordis.patch.yml:
 #   - id: bash-sandbox
@@ -255,7 +257,7 @@ Nothing else changes: `rtkAvailable`, the peer ranges, and the `engines` range a
 
 ```sh
 # 1. clone the plugin and its sibling harness
-git clone https://github.com/DeepTrial/dsh-bash-rtk.git
+git clone https://github.com/andimial/dsh-bash-rtk.git
 git clone https://github.com/deepseek-ai/deepseek-harness.git
 
 # 2. install harness deps and build the libraries the plugin links against

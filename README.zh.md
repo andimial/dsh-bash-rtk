@@ -1,12 +1,14 @@
 # dsh-bash-rtk
 
-[![CI](https://github.com/DeepTrial/dsh-bash-rtk/actions/workflows/ci.yml/badge.svg)](https://github.com/DeepTrial/dsh-bash-rtk/actions/workflows/ci.yml)
-[![GitHub Release](https://img.shields.io/github/v/release/DeepTrial/dsh-bash-rtk)](https://github.com/DeepTrial/dsh-bash-rtk/releases)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/DeepTrial/dsh-bash-rtk/blob/main/LICENSE)
+[![CI](https://github.com/andimial/dsh-bash-rtk/actions/workflows/ci.yml/badge.svg)](https://github.com/andimial/dsh-bash-rtk/actions/workflows/ci.yml)
+[![GitHub Release](https://img.shields.io/github/v/release/andimial/dsh-bash-rtk)](https://github.com/andimial/dsh-bash-rtk/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/andimial/dsh-bash-rtk/blob/main/LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D20.0.0-339933?logo=nodedotjs)](https://nodejs.org/)
 
 > 在 DeepSeek Harness（`dsh`）的 bash 执行器里，把符合条件的 shell 命令路由给 [rtk](https://github.com/rtk-ai/rtk)（Rust Token Killer）执行 —— 压缩工具输出、省 token、其余一概不变。
+
+> **本仓库是 [DeepTrial/dsh-bash-rtk](https://github.com/DeepTrial/dsh-bash-rtk) 的 fork。** 发布（releases）与 issue 跟踪都在此仓库（fork **andimial/dsh-bash-rtk**）。
 
 [English version](README.md)
 
@@ -126,7 +128,7 @@ rtk: Failed to run git status: Failed to execute command: 拒绝访问。 (os er
 
 即：以 `dsh` `0.1.1-rc.2` 为验证基准，接受任意 `0.1.x` 预发布/正式版，并**刻意排除** `0.2.0+`（未来大版本可能改动 `LocalBashExecutor.resolve()` / `ShellExecSpec` API，届时本插件需要一次子包升级才能跟进）。
 
-> **已知的版本错位：** `dsh`（聚合包，即 `npx @deepseek-ai/dsh` 安装的）与其 `@deepseek-ai/dsh-*` 子包处于**独立的 semver 轨道**——聚合包可能是 `0.1.1-rc.2`，而发布的子包仍是 `0.0.1-rc.1`。上述范围锁定到*已发布*的子包版本，因此普通 `dsh plugin add` 能干净解析。跟进匹配更新请关注 [releases](https://github.com/DeepTrial/dsh-bash-rtk/releases)。
+> **已知的版本错位：** `dsh`（聚合包，即 `npx @deepseek-ai/dsh` 安装的）与其 `@deepseek-ai/dsh-*` 子包处于**独立的 semver 轨道**——聚合包可能是 `0.1.1-rc.2`，而发布的子包仍是 `0.0.1-rc.1`。上述范围锁定到*已发布*的子包版本，因此普通 `dsh plugin add` 能干净解析。跟进匹配更新请关注 [releases](https://github.com/andimial/dsh-bash-rtk/releases)。
 
 ## 安装与启用
 
@@ -138,7 +140,7 @@ dsh plugin --profile web add "<path-to-this-dir>"
 
 # 2) 或直接用最新 GitHub release tarball 安装（无需本地 clone）
 dsh plugin --profile web add \
-  "https://github.com/DeepTrial/dsh-bash-rtk/releases/latest/download/dsh-bash-rtk-latest.tgz"
+  "https://github.com/andimial/dsh-bash-rtk/releases/latest/download/dsh-bash-rtk-latest.tgz"
 
 # 通过可选 overlay 启用 —— 在你的 profile 的 cordis.patch.yml 中添加：
 #   - id: bash-sandbox
@@ -255,7 +257,7 @@ pwsh 集是刻意取的超集：这些字符在 pwsh 里有解析含义，含其
 
 ```sh
 # 1. 克隆插件及其依赖的 harness
-git clone https://github.com/DeepTrial/dsh-bash-rtk.git
+git clone https://github.com/andimial/dsh-bash-rtk.git
 git clone https://github.com/deepseek-ai/deepseek-harness.git
 
 # 2. 安装 harness 依赖并构建插件所链接的库
