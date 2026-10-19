@@ -11,6 +11,12 @@ async function setup(config: { mode?: SandboxMode } = {}) {
   return { ctx, bash, calls }
 }
 
+/** Run one resolved spec to completion: dsh >=0.2 replaced `run()` with `execute()` + `result()`. */
+async function run(bash: RtkSandboxBashExecutor, command: string) {
+  const execution = await bash.execute(bash.resolve({ command }))
+  return await execution.result()
+}
+
 describe('RtkSandboxBashExecutor', () => {
   it('registers as ctx.shell', async () => {
     const { bash } = await setup()
@@ -19,7 +25,7 @@ describe('RtkSandboxBashExecutor', () => {
 
   it('routes eligible commands before the sandbox confines them', async () => {
     const { bash, calls } = await setup({ mode: 'read-only' })
-    await bash.run(bash.resolve({ command: 'git status' }))
+    await run(bash, 'git status')
     expect(calls).toEqual([{
       argv: ['bash', '-c', 'rtk git status'],
       policy: { mode: 'read-only', workspaceRoot: resolve(process.cwd()) },
@@ -33,19 +39,19 @@ describe('RtkSandboxBashExecutor', () => {
 
   it('leaves complex commands unchanged before confinement', async () => {
     const { bash, calls } = await setup({ mode: 'read-only' })
-    await bash.run(bash.resolve({ command: 'git status | grep x' }))
+    await run(bash, 'git status | grep x')
     expect(calls[0]?.argv).toEqual(['bash', '-c', 'git status | grep x'])
   })
 
   it('leaves non-whitelisted commands unchanged before confinement', async () => {
     const { bash, calls } = await setup({ mode: 'read-only' })
-    await bash.run(bash.resolve({ command: 'ls -la' }))
+    await run(bash, 'ls -la')
     expect(calls[0]?.argv).toEqual(['bash', '-c', 'ls -la'])
   })
 
   it('stamps sandbox facts on the result', async () => {
     const { bash } = await setup({ mode: 'read-only' })
-    const result = await bash.run(bash.resolve({ command: 'echo hi' }))
+    const result = await run(bash, 'echo hi')
     expect(result.sandbox).toEqual({ mode: 'read-only', denied: false, enforcement: 'full' })
   })
 })

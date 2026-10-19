@@ -14,7 +14,7 @@
  * @module @deeptrial/dsh-bash-rtk/pwsh
  */
 
-import { Context } from 'cordis'
+import { Context } from '@deepseek-ai/cordis'
 import { PwshLocalExecutor } from '@deepseek-ai/dsh-pwsh-local'
 import type { Config as LocalConfig } from '@deepseek-ai/dsh-pwsh-local'
 import { SandboxPwshExecutor } from '@deepseek-ai/dsh-pwsh-sandbox'

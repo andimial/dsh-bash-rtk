@@ -15,9 +15,8 @@
  */
 
 import { spawnSync } from 'node:child_process'
-import type { Context } from 'cordis'
+import type { Context } from '@deepseek-ai/cordis'
 import { resolvePwshPath } from '@deepseek-ai/dsh-pwsh-local'
-import type { Config as SandboxConfig } from '@deepseek-ai/dsh-bash-sandbox'
 import { RtkSandboxBashExecutor } from './index.ts'
 import { RtkSandboxPwshExecutor } from './pwsh.ts'
 import type { ShellDimension } from './wrap.ts'
@@ -26,13 +25,27 @@ import type { ShellDimension } from './wrap.ts'
 export type PreferShell = 'auto' | ShellDimension
 
 /** Assembler config: the sandbox executor's knobs plus the shell preference. */
-export interface Config extends SandboxConfig {
+export interface Config {
+  /** Default working directory for commands (default: the process working directory). */
+  cwd?: string | null
+  /** Default foreground timeout in milliseconds. */
+  timeoutMs?: number | null
+  /** Upper bound for per-call timeout overrides. */
+  maxTimeoutMs?: number | null
+  /** Per-stream in-memory output cap; overflow spills to a temp file. */
+  maxOutputBytes?: number | null
+  /** Per-stream spill-file cap; larger streams keep only their in-memory tail. */
+  maxSpillBytes?: number | null
+  /** Grace period for kill escalation and inherited pipes. */
+  graceMs?: number | null
+  /** Whether the rtk binary is available (the same switch the executors read). */
+  rtkAvailable?: boolean
   /** Which family to mount (default `auto`: the pwsh probe decides). */
   preferShell?: PreferShell
   /** Pin the probe verdict, skipping the probe entirely (tests, known platforms). */
   pwshAvailable?: boolean
   /** Explicit pwsh executable: the probed candidate, and the executable the pwsh family spawns. */
-  pwshPath?: string
+  pwshPath?: string | null
 }
 
 /** Startup budget for the probe; a candidate that cannot exit in time counts as absent. */
@@ -84,7 +97,7 @@ export function pickShell(preferShell: PreferShell, pwshAvailable: boolean): She
  */
 export async function apply(ctx: Context, config: Config): Promise<void> {
   const { preferShell = 'auto', pwshAvailable, ...executorConfig } = config
-  const shell = pickShell(preferShell, pwshAvailable ?? probePwsh(executorConfig.pwshPath))
+  const shell = pickShell(preferShell, pwshAvailable ?? probePwsh(executorConfig.pwshPath ?? undefined))
   if (shell === 'pwsh') {
     await ctx.plugin(RtkSandboxPwshExecutor, executorConfig)
   } else {

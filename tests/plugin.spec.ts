@@ -18,11 +18,11 @@ const plugin = JSON.parse(readFileSync(new URL('../dsh.plugin.json', import.meta
 /** The release this work ships. */
 const RELEASE = '0.2.1'
 
-/** The engines range the release deliberately leaves untouched. */
-const ENGINES = { dsh: '>=0.1.0-rc.6 <0.2.0 || >=0.1.1-rc.1 <0.2.0-0' }
+/** The engines range the release ships, with its own explicit 0.2.x branch. */
+const ENGINES = { dsh: '>=0.1.0-rc.6 <0.2.0 || >=0.2.0-0 <0.3.0-0' }
 
-/** The per-package range the 0.1.x track published for every harness sub-package. */
-const PEER_RANGE = '>=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.1.1 || >=0.1.1-rc.1 <0.2.0-0'
+/** The per-package range: one explicit prerelease branch per supported release line. */
+const PEER_RANGE = '>=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.1.1 || >=0.1.1-rc.1 <0.2.0-0 || >=0.2.0-0 <0.3.0-0'
 
 describe('plugin manifests', () => {
   it('carries the release version in both manifests', () => {
@@ -30,13 +30,13 @@ describe('plugin manifests', () => {
     expect(plugin.version).toBe(RELEASE)
   })
 
-  it('keeps the id and the engines ranges unchanged', () => {
+  it('pairs the manifest id with the shared engines ranges', () => {
     expect(plugin.id).toBe(manifest.name)
     expect(plugin.engines).toEqual(ENGINES)
-    expect(manifest.engines).toEqual({ node: '>=20.0.0' })
+    expect(manifest.engines).toEqual({ node: '>=20.0.0', dsh: ENGINES.dsh })
   })
 
-  it('leaves the peer ranges on the 0.1.x prerelease track', () => {
+  it('carries the explicit 0.2.x branch in every peer range', () => {
     const peers = Object.entries(manifest.peerDependencies)
     expect(peers).toHaveLength(5)
     for (const [name, range] of peers) {

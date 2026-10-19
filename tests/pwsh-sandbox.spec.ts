@@ -21,6 +21,11 @@ async function setup(config: { mode?: SandboxMode } = {}) {
   return { ctx, pwsh, calls }
 }
 
+/** Run one resolved spec to completion: dsh >=0.2 replaced `run()` with `execute()` + `result()`. */
+async function run(pwsh: RtkSandboxPwshExecutor, command: string) {
+  const execution = await pwsh.execute(pwsh.resolve({ command }))
+  return await execution.result()
+}
 describe('RtkSandboxPwshExecutor', () => {
   it('registers as ctx.shell', async () => {
     const { pwsh } = await setup()
@@ -29,7 +34,7 @@ describe('RtkSandboxPwshExecutor', () => {
 
   it('routes eligible commands before the sandbox confines them', async () => {
     const { pwsh, calls } = await setup({ mode: 'read-only' })
-    await pwsh.run(pwsh.resolve({ command: 'git status' }))
+    await run(pwsh, 'git status')
     expect(calls).toHaveLength(1)
     expect(calls[0]?.argv).toEqual([...PWSH_ARGV, `${ENCODING_PREAMBLE}rtk git status`])
   })
@@ -48,25 +53,25 @@ describe('RtkSandboxPwshExecutor', () => {
 
   it('leaves complex commands unchanged before confinement', async () => {
     const { pwsh, calls } = await setup()
-    await pwsh.run(pwsh.resolve({ command: 'git status | Select-String x' }))
+    await run(pwsh, 'git status | Select-String x')
     expect(calls[0]?.argv).toEqual([...PWSH_ARGV, `${ENCODING_PREAMBLE}git status | Select-String x`])
   })
 
   it('leaves non-whitelisted commands unchanged before confinement', async () => {
     const { pwsh, calls } = await setup()
-    await pwsh.run(pwsh.resolve({ command: 'Get-ChildItem -Recurse' }))
+    await run(pwsh, 'Get-ChildItem -Recurse')
     expect(calls[0]?.argv).toEqual([...PWSH_ARGV, `${ENCODING_PREAMBLE}Get-ChildItem -Recurse`])
   })
 
   it('leaves pwsh-specific metacharacters unchanged before confinement', async () => {
     const { pwsh, calls } = await setup()
-    await pwsh.run(pwsh.resolve({ command: 'git status # note' }))
+    await run(pwsh, 'git status # note')
     expect(calls[0]?.argv).toEqual([...PWSH_ARGV, `${ENCODING_PREAMBLE}git status # note`])
   })
 
   it('stamps sandbox facts on the result', async () => {
     const { pwsh } = await setup({ mode: 'read-only' })
-    const result = await pwsh.run(pwsh.resolve({ command: 'echo hi' }))
+    const result = await run(pwsh, 'echo hi')
     expect(result.sandbox).toEqual({ mode: 'read-only', denied: false, enforcement: 'full' })
   })
 })

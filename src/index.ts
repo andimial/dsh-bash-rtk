@@ -12,7 +12,7 @@
  * @module @deeptrial/dsh-bash-rtk
  */
 
-import { Context } from 'cordis'
+import { Context } from '@deepseek-ai/cordis'
 import { LocalBashExecutor } from '@deepseek-ai/dsh-bash-local'
 import type { Config as LocalConfig } from '@deepseek-ai/dsh-bash-local'
 import { SandboxBashExecutor } from '@deepseek-ai/dsh-bash-sandbox'

@@ -1,7 +1,7 @@
 import { ShellDimension, wrapWithRtk } from "./wrap.js";
 import { Config, LocalBashExecutor } from "@deepseek-ai/dsh-bash-local";
 import { Config as Config$1, SandboxBashExecutor } from "@deepseek-ai/dsh-bash-sandbox";
-import { Context } from "cordis";
+import { Context } from "@deepseek-ai/cordis";
 import { ShellExecRequest, ShellExecSpec } from "@deepseek-ai/dsh-shell";
 //#region src/index.d.ts
 /** Extend the upstream config so cordis plugin() accepts rtkAvailable. */

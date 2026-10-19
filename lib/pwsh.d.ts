@@ -1,6 +1,6 @@
 import { Config, PwshLocalExecutor } from "@deepseek-ai/dsh-pwsh-local";
 import { Config as Config$1, SandboxPwshExecutor } from "@deepseek-ai/dsh-pwsh-sandbox";
-import { Context } from "cordis";
+import { Context } from "@deepseek-ai/cordis";
 import { ShellExecRequest, ShellExecSpec } from "@deepseek-ai/dsh-shell";
 //#region src/pwsh.d.ts
 /** Extend the upstream pwsh config so cordis plugin() accepts rtkAvailable. */

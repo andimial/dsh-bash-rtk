@@ -1,17 +1,30 @@
 import { ShellDimension } from "./wrap.js";
-import { Config as Config$1 } from "@deepseek-ai/dsh-bash-sandbox";
-import { Context } from "cordis";
+import { Context } from "@deepseek-ai/cordis";
 //#region src/auto.d.ts
 /** Configured shell preference: `auto` follows the pwsh probe, the others pin it. */
 type PreferShell = 'auto' | ShellDimension;
 /** Assembler config: the sandbox executor's knobs plus the shell preference. */
-interface Config extends Config$1 {
+interface Config {
+  /** Default working directory for commands (default: the process working directory). */
+  cwd?: string | null;
+  /** Default foreground timeout in milliseconds. */
+  timeoutMs?: number | null;
+  /** Upper bound for per-call timeout overrides. */
+  maxTimeoutMs?: number | null;
+  /** Per-stream in-memory output cap; overflow spills to a temp file. */
+  maxOutputBytes?: number | null;
+  /** Per-stream spill-file cap; larger streams keep only their in-memory tail. */
+  maxSpillBytes?: number | null;
+  /** Grace period for kill escalation and inherited pipes. */
+  graceMs?: number | null;
+  /** Whether the rtk binary is available (the same switch the executors read). */
+  rtkAvailable?: boolean;
   /** Which family to mount (default `auto`: the pwsh probe decides). */
   preferShell?: PreferShell;
   /** Pin the probe verdict, skipping the probe entirely (tests, known platforms). */
   pwshAvailable?: boolean;
   /** Explicit pwsh executable: the probed candidate, and the executable the pwsh family spawns. */
-  pwshPath?: string;
+  pwshPath?: string | null;
 }
 /**
  * Probe whether the pwsh executable the pwsh family would spawn can start.
